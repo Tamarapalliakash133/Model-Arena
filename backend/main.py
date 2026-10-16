@@ -1,24 +1,22 @@
-"""Versus backend: race one prompt across many LLMs and stream everything over one SSE channel.
-
-Run:  uvicorn main:app --reload --port 8000
-"""
 import asyncio
 import json
 import os
 import time
+from pathlib import Path
 from collections import defaultdict, deque
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, Request  
-from fastapi.middleware.cors import CORSMiddleware 
-from fastapi.responses import StreamingResponse 
-from pydantic import BaseModel, Field  
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
-import backend.rag as rag 
-from backend.registry import ( 
+import backend.rag as rag
+from backend.registry import (
     MODEL_INDEX,
     MODELS,
     PROVIDER_LABELS,
@@ -193,3 +191,8 @@ async def arena_stream(req: ArenaRequest, request: Request):
 @app.get("/api/health")
 def health():
     return {"ok": True}
+
+
+DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+if DIST.exists():
+    app.mount("/", StaticFiles(directory=DIST, html=True), name="ui")
